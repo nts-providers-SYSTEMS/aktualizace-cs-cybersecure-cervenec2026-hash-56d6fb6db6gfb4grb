@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>CyberSecure NTS - Simulace aktualizace</title>
+  <style>
+    :root {
+      --primary: #0078d4;
+      --primary-hover: #005a9e;
+      --bg-dark: #000000;
+      --bg-blue: #005a9e;
+      --text-main: #242424;
+      --text-muted: #616161;
+      --border-color: #e0e0e0;
+      --uac-header: #202020;
+      --success-green: #107c41;
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      font-family: var(--font);
+      background-color: #ffffff;
+      color: var(--text-main);
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* Základní rozložení obrazovek */
+    .screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #ffffff;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.4s ease-in-out;
+    }
+
+    .screen.active {
+      display: flex;
+      opacity: 1;
+    }
+
+    /* Typografie a oddělovače */
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      color: #111111;
+      line-height: 1.2;
+    }
+
+    .divider {
+      width: 100%;
+      max-width: 500px;
+      height: 1px;
+      background-color: var(--border-color);
+      margin: 1.5rem 0;
+    }
+
+    p {
+      font-size: 1.05rem;
+      line-height: 1.6;
+      color: var(--text-muted);
+      max-width: 550px;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Styly tlačítek */
+    .btn {
+      font-family: var(--font);
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.85rem 2rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0, 120, 212, 0.25);
+    }
+
+    .btn:hover {
+      background-color: var(--primary-hover);
+      transform: translateY(-2px);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background-color: #f3f3f3;
+      color: #333333;
+      box-shadow: none;
+    }
+
+    .btn-secondary:hover {
+      background-color: #e5e5e5;
+    }
+
+    /* Informační seznam */
+    .info-list {
+      text-align: left;
+      width: 100%;
+      max-width: 500px;
+      margin-bottom: 2rem;
+    }
+
+    .info-item {
+      margin-bottom: 1rem;
+      line-height: 1.5;
+    }
+
+    .info-label {
+      font-weight: 700;
+      color: #111111;
+      display: block;
+      margin-bottom: 0.2rem;
+    }
+
+    .info-desc {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    /* Custom Checkbox */
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+      cursor: pointer;
+      text-align: left;
+      max-width: 500px;
+      width: 100%;
+    }
+
+    .custom-checkbox {
+      width: 24px;
+      height: 24px;
+      border: 2px solid var(--border-color);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .checkbox-container:hover .custom-checkbox {
+      border-color: var(--primary);
+    }
+
+    .checkbox-container.checked .custom-checkbox {
+      background-color: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .custom-checkbox::after {
+      content: "✓";
+      color: white;
+      font-weight: bold;
+      font-size: 14px;
+      display: none;
+    }
+
+    .checkbox-container.checked .custom-checkbox::after {
+      display: block;
+    }
+
+    .checkbox-text {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #333333;
+    }
+
+    /* Načítací kolečko (Spinner) */
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid rgba(0, 78, 212, 0.1);
+      border-left-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-top: 1.5rem;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Velké skákající tečky s podsvícením */
+    .dots-container {
+      display: flex;
+      gap: 1.2rem;
+      margin: 2rem 0;
+    }
+
+    .dot {
+      width: 28px;
+      height: 28px;
+      background-color: var(--primary);
+      border-radius: 50%;
+      animation: bounce 1.4s infinite ease-in-out both;
+      box-shadow: 0 0 15px rgba(0, 120, 212, 0.6);
+    }
+
+    .dot:nth-child(1) { animation-delay: -0.32s; }
+    .dot:nth-child(2) { animation-delay: -0.16s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0.3); opacity: 0.5; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+
+    .percentage-badge {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-top: 1rem;
+    }
+
+    /* Překryvné okno stylu Windows (UAC) */
+    .uac-modal {
+      width: 92%;
+      max-width: 550px;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      max-height: 92vh; /* Zabrání přetečení na malých displejích */
+      text-align: left;
+      animation: popUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes popUp {
+      0% { transform: scale(0.9) translateY(20px); opacity: 0; }
+      100% { transform: scale(1) translateY(0); opacity: 1; }
+    }
+
+    .uac-header-bar {
+      background-color: var(--uac-header);
+      color: white;
+      padding: 0.85rem 1.25rem;
+      font-weight: 600;
+      font-size: 1rem;
+      flex-shrink: 0; /* Zabrání zmenšení hlavičky */
+    }
+
+    .uac-content {
+      padding: 1.5rem;
+      overflow-y: auto; /* Umožní scrollování uvnitř modálního okna na mobilu */
+    }
+
+    .uac-warning-text {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #111111;
+      line-height: 1.5;
+      margin-bottom: 1.25rem;
+    }
+
+    .uac-category-title {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+
+    .uac-info-grid {
+      display: grid;
+      gap: 0.6rem;
+      font-size: 0.95rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .uac-info-row {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px dashed #f0f0f0;
+      padding-bottom: 0.4rem;
+    }
+
+    .uac-info-row span:first-child {
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .uac-info-row span:last-child {
+      font-weight: 600;
+      color: #111111;
+    }
+
+    .uac-cert-warning {
+      background-color: #fff9e6;
+      border-left: 4px solid #ffb900;
+      padding: 0.85rem;
+      font-size: 0.85rem;
+      color: #664d03;
+      line-height: 1.5;
+      margin-bottom: 1.5rem;
+      border-radius: 0 6px 6px 0;
+    }
+
+    .uac-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: flex-end;
+    }
+
+    /* Okno simulace "NTS Utility Setup Modern Host" */
+    .app-window {
+      width: 92%;
+      max-width: 500px;
+      background: white;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      text-align: left;
+    }
+
+    .app-header {
+      background-color: #f3f3f3;
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .app-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: #333333;
+    }
+
+    .app-close-icon {
+      font-size: 1.2rem;
+      color: #888888;
+      cursor: not-allowed;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .app-body {
+      padding: 2rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    /* Černá a modrá celoobrazovková rozhraní */
+    .screen-black {
+      background-color: var(--bg-dark);
+      color: #ffffff;
+    }
+
+    .screen-black h1, .screen-black p {
+      color: #ffffff;
+    }
+
+    .screen-blue {
+      background-color: var(--bg-blue);
+      color: #ffffff;
+    }
+
+    .screen-blue h1 {
+      color: #ffffff;
+      font-weight: 300;
+      font-size: 2.5rem;
+    }
+
+    .spinner-contrast {
+      border: 4px solid rgba(255, 255, 255, 0.2);
+      border-left-color: #ffffff;
+    }
+
+    /* Střídavý text na černé obrazovce aktualizace */
+    .status-text-carousel {
+      position: absolute;
+      bottom: 15%;
+      width: 100%;
+      text-align: center;
+      padding: 0 2rem;
+      font-size: 1.1rem;
+      font-weight: 400;
+      height: 30px;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .status-text-carousel.show {
+      opacity: 0.85;
+      transform: translateY(0);
+    }
+
+    /* Sekce loga Rudolfský */
+    .brand-logo-container {
+      margin-bottom: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-img {
+      max-width: 150px;
+      max-height: 150px;
+      object-fit: contain;
+    }
+
+    .logo-fallback {
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(135deg, #0078d4, #002050);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 800;
+      font-size: 2rem;
+      box-shadow: 0 8px 24px rgba(0, 120, 212, 0.3);
+      margin-bottom: 1rem;
+    }
+
+    .powered-by {
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+    }
+
+    /* Ikona zelené fajfky a aktualizace */
+    .success-icon {
+      width: 80px;
+      height: 80px;
+      background-color: #d1e7dd;
+      color: var(--success-green);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      font-weight: bold;
+      margin-bottom: 2rem;
+      box-shadow: 0 8px 24px rgba(16, 124, 65, 0.15);
+    }
+
+    .update-arrows-icon {
+      width: 80px;
+      height: 80px;
+      background-color: #e6f0fa;
+      color: var(--primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      margin-bottom: 2rem;
+      animation: pulse 2s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+
+    /* ⚙️ Vývojářský testovací panel */
+    .dev-panel {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      background-color: rgba(255, 255, 255, 0.95);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      z-index: 99999;
+      font-size: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      max-width: 250px;
+    }
+
+    .dev-panel-title {
+      font-weight: bold;
+      margin-bottom: 3px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .dev-btn {
+      background-color: #444;
+      color: white;
+      border: none;
+      padding: 3px 6px;
+      font-size: 0.7rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .dev-btn:hover { background-color: #222; }
+
+    .dev-status {
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .dev-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 3px;
+      margin-top: 5px;
+    }
+
+    /* Optimalizace pro malé displeje */
+    @media (max-width: 480px) {
+      .screen {
+        padding: 1.25rem;
+      }
+      h1 {
+        font-size: 1.6rem;
+      }
+      p {
+        font-size: 0.95rem;
+      }
+      .uac-modal, .app-window {
+        width: 100%;
+      }
+      .uac-content {
+        padding: 1rem;
+      }
+      .uac-buttons {
+        flex-direction: column-reverse;
+      }
+      .uac-buttons .btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SKRYTÉ AUDIO ELEMENTY -->
+  <audio id="audio-warning" src="varovny_zvuk.mp3" preload="auto"></audio>
+  <audio id="audio-welcome" src="uvitaci_zvuk.mp3" preload="auto"></audio>
+  <audio id="audio-final" src="finalni_zvuk.mp3" preload="auto"></audio>
+
+  <div id="simulation-wrapper" style="width: 100%; height: 100%;">
+
+    <!-- 1. OBRAZOVKA: START -->
+    <section id="screen-start" class="screen active">
+      <h1>Aktualizace CyberSecure NTS</h1>
+      <div class="divider"></div>
+      <p>Aktualizace CyberSecure je připravena. Z důvodů ochrany a bezpečnosti ji doporučujeme provést co nejdříve. Pokud ji nyní nemůžete udělat, zavřete tuto zprávu, budete upozorněni později. Pokud chcete aktualizaci nyní provést, klikněte na tlačítko níže. V dalším kroku se dozvíte více podrobností.</p>
+      <button class="btn" onclick="goToScreen('screen-info')">Začít teď &rarr;</button>
+    </section>
+
+    <!-- 2. OBRAZOVKA: INFORMACE O AKTUALIZACI -->
+    <section id="screen-info" class="screen">
+      <h1>Zahajte aktualizaci nyní</h1>
+      <div class="divider"></div>
+      
+      <div class="info-list">
+        <div class="info-item">
+          <span class="info-label">Informace o aktualizaci:</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Velikost:</span>
+          <span class="info-desc">2,3 GB (stahování pomocí mobilních dat může mít za následek další poplatky u operátora!)</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Odhadovaná doba aktualizace:</span>
+          <span class="info-desc">50 min</span>
+        </div>
+        <div class="info-item">
+          <span class="info-desc">Zařízení není možné během aktualizace používat. Zařízení se během aktualizace několikrát restartuje.</span>
+        </div>
+      </div>
+
+      <div class="checkbox-container" id="dwm-checkbox-container" onclick="toggleCheckbox()">
+        <div class="custom-checkbox"></div>
+        <span class="checkbox-text">Nainstalovat i přes mobilní data</span>
+      </div>
+
+      <button class="btn" onclick="startUpdateSimulation()">Nainstalovat aktualizace nyní</button>
+    </section>
+
+    <!-- 3. OBRAZOVKA: NAČÍTÁNÍ (BÍLÁ OBRAZOVKA, 12s) -->
+    <section id="screen-loading1" class="screen">
+      <h1>Načítá se...</h1>
+      <div class="spinner"></div>
+    </section>
+
+    <!-- 4. OBRAZOVKA: UAC PROMPT (ŘÍZENÍ UŽIVATELSKÝCH ÚČTŮ) -->
+    <section id="screen-uac" class="screen" style="background-color: rgba(240, 240, 240, 0.95);">
+      <div class="uac-modal">
+        <div class="uac-header-bar">Řízení zabezpečení uživatelských účtů</div>
+        <div class="uac-content">
+          <div class="uac-warning-text">
+            Chcete aplikaci NTS Utility Setup Modern Host povolit, aby prováděla změny v aplikaci CyberSecure NTS? Udělejte to pouze, pokud je aplikace NTS Utility Setup Modern Host důvěryhodná.
+          </div>
+          <div class="divider" style="margin: 1rem 0;"></div>
+          <div class="uac-category-title">Bezpečnostní informace o NTS Utility Setup Modern Host:</div>
+          <div class="uac-info-grid">
+            <div class="uac-info-row"><span>Ověřený vydavatel:</span><span>New Technology Software NTS</span></div>
+            <div class="uac-info-row"><span>Digitální otisk:</span><span>Rudolfský Software Co.</span></div>
+            <div class="uac-info-row"><span>Vydavatel:</span><span>NTS Update Publisher</span></div>
+            <div class="uac-info-row"><span>Hash:</span><span>Ověřený</span></div>
+            <div class="uac-info-row"><span>Ověřený certifikát:</span><span>podepsal Let's Encrypt</span></div>
+          </div>
+          <div class="uac-cert-warning">
+            Ujistěte se, že podpis certifikátu je od společnosti Let's Encrypt nebo Alphabet. Jiné certifikáty (nebo nepodepsané certifikáty) mohou značit škodlivý kód nebo malware. Pokud si nejste jisti, doporučujeme aplikaci nespouštět.
+          </div>
+          <div class="uac-buttons">
+            <button class="btn btn-secondary" onclick="cancelUpdate()">Ne</button>
+            <button class="btn" onclick="acceptUAC()">Ano</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- OBRAZOVKA STORNÁNO UŽIVATELEM -->
+    <section id="screen-cancelled" class="screen">
+      <p style="font-size: 1.2rem; font-weight: 600;">Instalace aktualizací byla zrušena uživatelem.</p>
+      <button class="btn" onclick="resetToStart()">Začít znovu</button>
+    </section>
+
+    <!-- 5. OBRAZOVKA: MODERN HOST OKNO (KONTROLA, 2 min / TEXT ZMĚNA 30s) -->
+    <section id="screen-modern-host" class="screen">
+      <div class="app-window">
+        <div class="app-header">
+          <span class="app-title">NTS Utility Setup Modern Host</span>
+          <span class="app-close-icon">&times;</span>
+        </div>
+        <div class="app-body">
+          <h2 id="modern-host-text" style="font-size: 1.2rem; font-weight: 600; line-height: 1.5; margin-bottom: 1rem;">
+            Kontrolujeme, jestli je všechno připravené k instalaci.
+          </h2>
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. OBRAZOVKA: ZJIŠŤUJÍ SE AKTUALIZACE (16 min) -->
+    <section id="screen-detecting" class="screen">
+      <h1>Zjišťují se aktualizace</h1>
+      <div class="dots-container">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+      <div class="percentage-badge">2 %</div>
+    </section>
+
+    <!-- 7. OBRAZOVKA: PŘIPRAVUJE SE AKTUALIZACE (3 min) -->
+    <section id="screen-preparing" class="screen">
+      <h1>Připravuje se aktualizace</h1>
+      <div class="dots-container">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+    </section>
+
+    <!-- 11. OBRAZOVKA: PŘIPRAVENO K RESTARTU -->
+    <section id="screen-ready-to-restart" class="screen">
+      <div class="app-window">
+        <div class="app-header">
+          <span class="app-title">NTS Utility Setup Modern Host</span>
+          <span class="app-close-icon">&times;</span>
+        </div>
+        <div class="app-body">
+          <h2 style="font-size: 1.15rem; font-weight: 600; line-height: 1.5; margin-bottom: 1.5rem;">
+            Aktualizace jsou připravené k instalaci. Aktualizace se nainstalují, jakmile restartujete médium.
+          </h2>
+          <button class="btn" onclick="triggerRestart()">Restartovat</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12. OBRAZOVKA: MODRÁ RESET OBRAZOVKA (17s) -->
+    <section id="screen-restarting" class="screen screen-blue">
+      <h1 style="margin-bottom: 2rem;">Restartování</h1>
+      <div class="spinner spinner-contrast" style="width: 60px; height: 60px; border-width: 5px;"></div>
+    </section>
+
+    <!-- 13. OBRAZOVKA: CHYBA SETUPET DWM (16 min 43s) -->
+    <section id="screen-dwm-error" class="screen screen-black">
+      <h2 style="font-size: 1.4rem; font-family: monospace; font-weight: normal; color: #aaaaaa;">
+        Setupet.dwm
+      </h2>
+    </section>
+
+    <!-- 14. OBRAZOVKA: PROBÍHAJÍ PRÁCE NA AKTUALIZACÍCH (31 min) -->
+    <section id="screen-updating-progress" class="screen screen-black" style="justify-content: center;">
+      <h1 style="font-size: 1.8rem; font-weight: 400; margin-bottom: 1.5rem;">Probíhají práce na aktualizacích...</h1>
+      <div id="progress-percentage" style="font-size: 3.5rem; font-weight: 300; margin-bottom: 2rem;">0 %</div>
+      
+      <!-- Střídající se texty na spodu -->
+      <div id="updating-carousel-text" class="status-text-carousel">Ujistěte se, že zařízení zůstane zapnuté.</div>
+    </section>
+
+    <!-- 15. OBRAZOVKA: LOGO RUDOLFSKÝ (12s + 3min čekání) -->
+    <section id="screen-rudolfsky" class="screen">
+      <div class="brand-logo-container">
+        <!-- Logický fallback pro případ chybějícího obrázku -->
+        <img src="obrazek1.png" alt="Logo" class="logo-img" onerror="this.style.display='none'; document.getElementById('logo-placeholder').style.display='flex';">
+        <div id="logo-placeholder" class="logo-fallback" style="display:none;">R</div>
+        <div class="powered-by">Powered by Rudolfský Software</div>
+      </div>
+      <div id="rudolfsky-loading-section" style="display: none; flex-direction: column; align-items: center;">
+        <h2 style="font-size: 1.1rem; color: var(--text-muted); margin-bottom: 1rem;">Počkejte prosím...</h2>
+        <div class="spinner"></div>
+      </div>
+    </section>
+
+    <!-- 16. OBRAZOVKA: DŮLEŽITÉ NASTAVENÍ (5 min) -->
+    <section id="screen-important-settings" class="screen">
+      <h1 style="max-width: 600px; font-size: 1.6rem; font-weight: 600; line-height: 1.6; color: #111111;">
+        Teď musíme provést nějaké důležité nastavení. V klidu se usaďte a odpočívejte, než se nám podaří vše dodělat.
+      </h1>
+      <div class="spinner" style="margin-top: 2rem;"></div>
+    </section>
+
+    <!-- 17. OBRAZOVKA: VÍTEJTE V V13 (4 min) -->
+    <section id="screen-welcome-v13" class="screen">
+      <div class="update-arrows-icon">↺</div>
+      <h1>Vítejte v CyberSecure NTS V13.0!</h1>
+      <p style="max-width: 600px; font-size: 1rem; color: var(--text-muted);">
+        Aktualizace byla úspěšná! Jelikož jste aplikaci CyberSecure aktualizovali na verzi 13.0, je nutné provést poslední krok. V rámci poslední aktualizace V13.0 jste obdrželi aktualizaci doručení antimalwarových definic. V rámci zajištění ochrany se tato aktualizace právě instaluje na pozadí. Bude to trvat už jen chvíli. Po dokončení aktualizace budete přesměrováni do aplikace.
+      </p>
+      <div class="spinner" style="margin-top: 2rem;"></div>
+    </section>
+
+    <!-- 18. OBRAZOVKA: FINÁLNÍ DOKONČENÍ -->
+    <section id="screen-finished" class="screen">
+      <div class="success-icon">✓</div>
+      <h1>Aktualizace byla dokončena</h1>
+      <p style="font-weight: 600; color: #111111;">Aktualizace byla úspěšná! Restartujte prosím zařízení, aby se použily nové funkce.</p>
+    </section>
+
+  </div>
+
+  <!-- ⚙️ SKRYTÝ VÝVOJÁŘSKÝ PANEL PRO RYCHLÉ TESTOVÁNÍ -->
+  <div class="dev-panel" id="devPanel">
+    <div class="dev-panel-title">
+      <span>⚙️ Vývojářský režim</span>
+      <button class="dev-btn" onclick="toggleDevPanel()">X</button>
+    </div>
+    <div>Rychlost: <span id="devSpeedStatus" class="dev-status">Normální (1x)</span></div>
+    <button class="dev-btn" style="width:100%; margin: 3px 0;" onclick="toggleSpeed()">Zrychlit simulaci (100x)</button>
+    <div style="font-weight: bold; margin-top: 5px;">Přeskočit na krok:</div>
+    <div class="dev-grid">
+      <button class="dev-btn" onclick="devJump('screen-start')">1. Start</button>
+      <button class="dev-btn" onclick="devJump('screen-info')">2. Info</button>
+      <button class="dev-btn" onclick="devJump('screen-loading1')">3. Načítání</button>
+      <button class="dev-btn" onclick="devJump('screen-uac')">4. UAC 1</button>
+      <button class="dev-btn" onclick="devJump('screen-modern-host')">5. Host 1</button>
+      <button class="dev-btn" onclick="devJump('screen-detecting')">6. Detekce</button>
+      <button class="dev-btn" onclick="devJump('screen-preparing')">7. Příprava</button>
+      <button class="dev-btn" onclick="devJump('screen-ready-to-restart')">11. Restart</button>
+      <button class="dev-btn" onclick="devJump('screen-restarting')">12. Modrá</button>
+      <button class="dev-btn" onclick="devJump('screen-dwm-error')">13. Chyba</button>
+      <button class="dev-btn" onclick="devJump('screen-updating-progress')">14. Procenta</button>
+      <button class="dev-btn" onclick="devJump('screen-rudolfsky')">15. Rudolfský</button>
+      <button class="dev-btn" onclick="devJump('screen-important-settings')">16. Nastav.</button>
+      <button class="dev-btn" onclick="devJump('screen-welcome-v13')">17. Vítejte</button>
+      <button class="dev-btn" onclick="devJump('screen-finished')">18. Konec</button>
+    </div>
+  </div>
+
+  <script>
+    // --- STAV SIMULACE A ČASY (v milisekundách) ---
+    let state = {
+      showDwmError: false,
+      uacCount: 1, // Sleduje, jestli jde o první nebo druhé zobrazení UAC
+      isFastMode: false,
+      speedFactor: 1
+    };
+
+    // Původní časy zadané uživatelem
+    const REAL_TIMES = {
+      loading1: 12 * 1000,                  // 12 sekund
+      modernHostCheck1: 2 * 60 * 1000,       // 2 minuty
+      modernHostNoDownload: 30 * 1000,      // 30 sekund
+      detectingUpdates: 16 * 60 * 1000,     // 16 minut
+      preparingUpdate: 3 * 60 * 1000,       // 3 minuty
+      modernHostCheck2: 5 * 60 * 1000,       // 5 minut
+      modernHostMediaReset: 2 * 60 * 1000,   // 2 minuty
+      briefWhiteScreen: 15 * 1000,          // 15 sekund
+      restartingBlue: 17 * 1000,            // 17 sekund
+      dwmError: (16 * 60 * 1000) + (43 * 1000), // 16 min 43s
+      progressTotal: 31 * 60 * 1000,         // 31 minut
+      rudolfskyIntro: 12 * 1000,            // 12 sekund
+      rudolfskyWait: 3 * 60 * 1000,          // 3 minuty
+      importantSettings: 5 * 60 * 1000,      // 5 minut
+      finalWelcome: 4 * 60 * 1000           // 4 minuty
+    };
+
+    // Aktivní časy (které se mohou zrychlit)
+    let TIMES = { ...REAL_TIMES };
+
+    // --- AUDIO SYNTETIZÁTOR (Záloha pokud neexistují lokální mp3 soubory) ---
+    const AudioEngine = {
+      ctx: null,
+      
+      init() {
+        if (!this.ctx) {
+          this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+      },
+
+      play(type) {
+        this.init();
+        const element = document.getElementById(`audio-${type}`);
+        
+        // Zkusí přehrát reálný soubor
+        if (element && element.src && !element.paused) {
+          element.currentTime = 0;
+        }
+        
+        if (element) {
+          element.play().catch(err => {
+            console.log(`Reálný zvuk pro ${type} nebyl nalezen nebo přehrán, spouštím syntetizátor.`);
+            this.synthesize(type);
+          });
+        } else {
+          this.synthesize(type);
+        }
+      },
+
+      synthesize(type) {
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        
+        if (type === 'warning') {
+          // Klasický ostrý Windows warning akord
+          const frequencies = [150, 153]; 
+          frequencies.forEach(f => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(f, now);
+            osc.frequency.exponentialRampToValueAtTime(100, now + 0.4);
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.5);
+          });
+        } 
+        else if (type === 'welcome') {
+          // Příjemný, čistý digitální uvítací akord (Arpeggio)
+          const notes = [261.63, 329.63, 392.00, 523.25, 659.25]; // C E G C E
+          notes.forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.1);
+            gain.gain.setValueAtTime(0.12, now + idx * 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 1.2);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now + idx * 0.1);
+            osc.stop(now + idx * 0.1 + 1.5);
+          });
+        }
+        else if (type === 'final') {
+          // Teplý, harmonický ambientní tón na závěr
+          const notes = [311.13, 466.16, 622.25]; // Eb Bb Eb
+          notes.forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now);
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 2.0);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now);
+            osc.stop(now + 2.5);
+          });
+        }
+      }
+    };
+
+    // --- NAVIGACE MEZI OBRAZOVKAMI ---
+    function goToScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      const activeScreen = document.getElementById(screenId);
+      if (activeScreen) {
+        activeScreen.classList.add('active');
+      }
+    }
+
+    // --- OVLÁDÁNÍ CHECKBOXU ---
+    function toggleCheckbox() {
+      const cb = document.getElementById('dwm-checkbox-container');
+      cb.classList.toggle('checked');
+      state.showDwmError = cb.classList.contains('checked');
+    }
+
+    // --- ZAČÁTEK SIMULACE ---
+    function startUpdateSimulation() {
+      goToScreen('screen-loading1');
+      
+      setTimeout(() => {
+        showUAC();
+      }, TIMES.loading1);
+    }
+
+    // --- ŘÍZENÍ UAC OKNA ---
+    function showUAC() {
+      goToScreen('screen-uac');
+      AudioEngine.play('warning');
+    }
+
+    function cancelUpdate() {
+      goToScreen('screen-cancelled');
+    }
+
+    function resetToStart() {
+      state.uacCount = 1;
+      goToScreen('screen-start');
+    }
+
+    function acceptUAC() {
+      if (state.uacCount === 1) {
+        // První průchod
+        startModernHost1();
+      } else {
+        // Druhý průchod po přípravě aktualizace
+        startModernHost2();
+      }
+    }
+
+    // --- MODERN HOST FÁZE 1 ---
+    function startModernHost1() {
+      goToScreen('screen-modern-host');
+      const textElement = document.getElementById('modern-host-text');
+      textElement.innerText = "Kontrolujeme, jestli je všechno připravené k instalaci.";
+
+      setTimeout(() => {
+        textElement.innerText = "Aktualizace nejsou stažené. Instalační proces se musí restartovat. Poté budeme pokračovat stažením aktualizace.";
+        
+        setTimeout(() => {
+          startDetectingUpdates();
+        }, TIMES.modernHostNoDownload);
+
+      }, TIMES.modernHostCheck1);
+    }
+
+    // --- DETEKCE AKTUALIZACÍ (2 % a tečky) ---
+    function startDetectingUpdates() {
+      goToScreen('screen-detecting');
+
+      setTimeout(() => {
+        startPreparingUpdates();
+      }, TIMES.detectingUpdates);
+    }
+
+    // --- PŘÍPRAVA AKTUALIZACÍ ---
+    function startPreparingUpdates() {
+      goToScreen('screen-preparing');
+
+      setTimeout(() => {
+        state.uacCount = 2; // Nastavit na druhý průchod UAC
+        showUAC();
+      }, TIMES.preparingUpdate);
+    }
+
+    // --- MODERN HOST FÁZE 2 ---
+    function startModernHost2() {
+      goToScreen('screen-modern-host');
+      const textElement = document.getElementById('modern-host-text');
+      textElement.innerText = "Kontrolujeme, jestli je všechno připravené k instalaci";
+
+      setTimeout(() => {
+        textElement.innerText = "Aktualizace jsou nainstalované, ale aby se použily, musí se restartovat instalační médium. Po restartu budeme pokračovat tam, kde jsme skončili.";
+        
+        setTimeout(() => {
+          // Krátká bílá obrazovka
+          goToScreen('screen-loading1'); // využijeme prázdné načítání s spinnerem, vyčistíme text
+          document.querySelector('#screen-loading1 h1').style.display = 'none';
+          document.querySelector('#screen-loading1 .spinner').style.display = 'none';
+
+          setTimeout(() => {
+            // Zpět zobrazení textů s novým stavem "připraveno k restartu"
+            document.querySelector('#screen-loading1 h1').style.display = 'block';
+            document.querySelector('#screen-loading1 .spinner').style.display = 'block';
+            goToScreen('screen-ready-to-restart');
+          }, TIMES.briefWhiteScreen);
+
+        }, TIMES.modernHostMediaReset);
+
+      }, TIMES.modernHostCheck2);
+    }
+
+    // --- RESTART A FULLSCREEN ---
+    function triggerRestart() {
+      // Pokus o spuštění Fullscreenu pro maximální efekt na mobilu
+      const docEl = document.documentElement;
+      if (docEl.requestFullscreen) {
+        docEl.requestFullscreen().catch(() => {});
+      } else if (docEl.webkitRequestFullscreen) {
+        docEl.webkitRequestFullscreen();
+      }
+
+      goToScreen('screen-restarting');
+
+      setTimeout(() => {
+        if (state.showDwmError) {
+          triggerDwmError();
+        } else {
+          startProgressUpdate();
+        }
+      }, TIMES.restartingBlue);
+    }
+
+    // --- CHYBA SETUPET DWM (Volitelné) ---
+    function triggerDwmError() {
+      goToScreen('screen-dwm-error');
+      
+      setTimeout(() => {
+        startProgressUpdate();
+      }, TIMES.dwmError);
+    }
+
+    // --- PROBÍHAJÍ PRÁCE NA AKTUALIZACÍCH (Procentuální odpočet a karusel) ---
+    function startProgressUpdate() {
+      goToScreen('screen-updating-progress');
+      
+      const percentEl = document.getElementById('progress-percentage');
+      const carouselEl = document.getElementById('updating-carousel-text');
+      
+      // Nastavení rotace textů na spodu (každých 7 sekund)
+      const texts = [
+        "Ujistěte se, že zařízení zůstane zapnuté.",
+        "Ponechte prosím zařízení zapnuté",
+        "Může to trvat i několik minut",
+        "Děkujeme za trpělivost"
+      ];
+      let textIdx = 0;
+      
+      carouselEl.innerText = texts[0];
+      carouselEl.classList.add('show');
+
+      const textInterval = setInterval(() => {
+        carouselEl.classList.remove('show');
+        setTimeout(() => {
+          textIdx = (textIdx + 1) % texts.length;
+          carouselEl.innerText = texts[textIdx];
+          carouselEl.classList.add('show');
+        }, 600); // čas pro schování (transition fadeout)
+      }, 7000);
+
+      // Logika procent
+      let currentPercent = 0;
+      const startTime = Date.now();
+      const totalDuration = TIMES.progressTotal;
+
+      const progressInterval = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        let pct = Math.floor((elapsed / totalDuration) * 100);
+        
+        if (pct >= 100) {
+          pct = 100;
+          clearInterval(progressInterval);
+          clearInterval(textInterval);
+          startRudolfskyScreen();
+        }
+        
+        percentEl.innerText = `${pct} %`;
+      }, 1000);
+    }
+
+    // --- LOGO RUDOLFSKÝ + NAČÍTÁNÍ ---
+    function startRudolfskyScreen() {
+      goToScreen('screen-rudolfsky');
+      AudioEngine.play('welcome');
+
+      const waitSection = document.getElementById('rudolfsky-loading-section');
+      waitSection.style.display = 'none';
+
+      // Po 12 sekundách přidat text a kolečko
+      setTimeout(() => {
+        waitSection.style.display = 'flex';
+        
+        // Po dalších 3 minutách spustit důležité nastavení
+        setTimeout(() => {
+          startImportantSettings();
+        }, TIMES.rudolfskyWait);
+
+      }, TIMES.rudolfskyIntro);
+    }
+
+    // --- DŮLEŽITÉ NASTAVENÍ (5 min) ---
+    function startImportantSettings() {
+      goToScreen('screen-important-settings');
+
+      setTimeout(() => {
+        startWelcomeV13();
+      }, TIMES.importantSettings);
+    }
+
+    // --- VÍTEJTE V CYBERSECURE NTS V13 (4 min) ---
+    function startWelcomeV13() {
+      goToScreen('screen-welcome-v13');
+      AudioEngine.play('final');
+
+      setTimeout(() => {
+        finishSimulation();
+      }, TIMES.finalWelcome);
+    }
+
+    // --- FINÁLNÍ OBRAZOVKA ---
+    function finishSimulation() {
+      goToScreen('screen-finished');
+      // Ukončit fullscreen pokud byl aktivní
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
+
+    // ==========================================
+    // ⚙️ POMOCNÉ FUNKCE PRO VÝVOJÁŘSKÝ PANEL 
+    // ==========================================
+    
+    function toggleDevPanel() {
+      const panel = document.getElementById('devPanel');
+      panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
+    }
+
+    function toggleSpeed() {
+      state.isFastMode = !state.isFastMode;
+      const statusEl = document.getElementById('devSpeedStatus');
+      
+      if (state.isFastMode) {
+        state.speedFactor = 100;
+        statusEl.innerText = "Zrychlený (100x)";
+        statusEl.style.color = "#107c41";
+      } else {
+        state.speedFactor = 1;
+        statusEl.innerText = "Normální (1x)";
+        statusEl.style.color = "var(--primary)";
+      }
+
+      // Přepočítat časy podle aktuální rychlosti
+      for (let key in REAL_TIMES) {
+        TIMES[key] = REAL_TIMES[key] / state.speedFactor;
+      }
+    }
+
+    function devJump(screenId) {
+      // Vyčistit případné běžící intervaly
+      let id = window.setTimeout(function() {}, 0);
+      while (id--) {
+        window.clearTimeout(id);
+      }
+      
+      // Spustit audio kontext
+      AudioEngine.init();
+
+      // Provést skok
+      goToScreen(screenId);
+
+      // Pokud skočíme na specifickou obrazovku, musíme občas inicializovat její chování
+      if (screenId === 'screen-modern-host') {
+        document.getElementById('modern-host-text').innerText = "Kontrolujeme, jestli je všechno připravené k instalaci (Simulovaný vývojářský skok).";
+      }
+      else if (screenId === 'screen-updating-progress') {
+        startProgressUpdate();
+      }
+      else if (screenId === 'screen-rudolfsky') {
+        document.getElementById('rudolfsky-loading-section').style.display = 'flex';
+        AudioEngine.play('welcome');
+      }
+      else if (screenId === 'screen-welcome-v13') {
+        AudioEngine.play('final');
+      }
+    }
+  </script>
+</body>
+</html>
